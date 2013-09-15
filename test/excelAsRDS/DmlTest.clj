@@ -1,10 +1,11 @@
 (ns excelAsRDS.DmlTest
-  (:require [clojure.test :refer :all]
-    [excelAsRDS.Dml :refer :all]))
-
-(import '(org.apache.poi.hssf.usermodel HSSFWorkbook))
-(import '(java.io FileInputStream FileOutputStream))
-(use '[clojure.java.io])
+  (:require
+    [clojure.test :refer :all]
+    [excelAsRDS.Dml :refer :all]
+    [clojure.java.io :refer :all])
+  (:import
+    (org.apache.poi.hssf.usermodel HSSFWorkbook)
+    (java.io FileInputStream FileOutputStream)))
 
 (deftest ut-get-cell-value
   (testing "get-cell-value(正常系)"

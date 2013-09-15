@@ -1,5 +1,6 @@
 (ns excelAsRDS.UtilityTest
-  (:require [clojure.test :refer :all]
+  (:require
+    [clojure.test :refer :all]
     [excelAsRDS.Utility :refer :all]))
 
 (deftest ut-isEqualJSONStrAsSet
