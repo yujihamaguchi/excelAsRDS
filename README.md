@@ -5,6 +5,6 @@ Excel as a Relational Data Source
 
 ## License
 
-Copyright © 2013 FIXME
+Copyright © 2013 Yuji Hamaguchi
 
-Distributed under the Eclipse Public License, the same as Clojure.
+Released under the MIT license
