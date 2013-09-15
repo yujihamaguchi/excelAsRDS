@@ -1,6 +1,8 @@
-(ns excelAsRDS.Utility
+(ns ^{:doc "Operate excel sheet as relational data source using Apache POI."
+      :author "Yuji Hamaguchi"}
+  excelAsRDS.Utility
   (:gen-class
-    :name exel-as-rds.Utility
+    :name excelAsRDS.Utility
     :methods [
       #^{:static true} [isEqualJSONStrAsSet [String String] Boolean]
       #^{:static true} [differenceJSONStrAsSet [String String] String]

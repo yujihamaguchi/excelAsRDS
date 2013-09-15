@@ -1,4 +1,4 @@
-(ns ^{:doc "Operate excel using Apache POI."
+(ns ^{:doc "Operate excel sheet as relational data source using Apache POI."
       :author "Yuji Hamaguchi"}
   excelAsRDS.Dml
   (:require
