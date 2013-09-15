@@ -1,3 +1,3 @@
-# Introduction to jp.co.isidao.aorba.opss.dml
+# Introduction to excelAsRDS
 
 TODO: write [great documentation](http://jacobian.org/writing/great-documentation/what-to-write/)
