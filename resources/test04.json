@@ -1,0 +1,8 @@
+{
+  "columnIndex" : {
+    "host" : 0
+    "id" : 1
+    "pwd" : 3
+  }
+  "required" : ["id" "host"]
+}

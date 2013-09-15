@@ -1,0 +1,13 @@
+{
+  "sheetIndex" : 0
+  "columnIndex" : {
+    "host" : 0
+    "id" : 1
+    "pwd" : 2
+    "valid_flg" : 3
+    "ref_num" : 4
+  }
+  "startRowIndex" : 3
+  "endRowIndex" : 5
+  "required" : ["host", "id"]
+}
