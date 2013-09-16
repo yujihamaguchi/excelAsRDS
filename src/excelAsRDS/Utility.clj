@@ -1,6 +1,8 @@
-(ns ^{:doc "Operate excel sheet as relational data source using Apache POI."
-      :author "Yuji Hamaguchi"}
+(ns ^{:author "Yuji Hamaguchi"}
   excelAsRDS.Utility
+  (:use
+    [clojure.data.json :as json :only [read-json write-str]]
+    clojure.set)
   (:gen-class
     :name excelAsRDS.Utility
     :methods [
@@ -8,23 +10,24 @@
       #^{:static true} [differenceJSONStrAsSet [String String] String]
     ]))
 
-(use '[clojure.data.json :as json :only [read-json write-str]])
-(use 'clojure.set)
-
-(defn isEqualJSONStrAsSet [json-str1 json-str2]
+(defn isEqualJSONStrAsSet
+  "Returns true if arguments are equal to each other as set, false otherwise."
+  [set1-json set2-json]
   (let [
-    set1 (set (json/read-json json-str1))
-    set2 (set (json/read-json json-str2))]
+    set1 (set (json/read-json set1-json))
+    set2 (set (json/read-json set2-json))]
     (= set1 set2)))
 
-(defn -isEqualJSONStrAsSet [json-str1 json-str2]
-  (isEqualJSONStrAsSet json-str1 json-str2))
+(defn -isEqualJSONStrAsSet [set1-json set2-json]
+  (isEqualJSONStrAsSet set1-json set2-json))
 
-(defn differenceJSONStrAsSet [json-str1 json-str2]
+(defn differenceJSONStrAsSe
+  "Returns different arguments. (set1 - set2)"
+  [set1-json set2-json]
   (let [
-    set1 (set (json/read-json json-str1))
-    set2 (set (json/read-json json-str2))]
+    set1 (set (json/read-json set1-json))
+    set2 (set (json/read-json set2-json))]
     (json/write-str (difference set1 set2))))
 
-(defn -differenceJSONStrAsSet [json-str1 json-str2]
-  (differenceJSONStrAsSet json-str1 json-str2))
+(defn -differenceJSONStrAsSet [set1-json set2-json]
+  (differenceJSONStrAsSet set1-json set2-json))

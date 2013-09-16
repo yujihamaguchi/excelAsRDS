@@ -86,13 +86,13 @@
   (and
     (not (empty? cell-addr-val-coll))
     (try
-      (let [kvs (json/read-json cell-addr-val-coll)]
+      (let [key-value-coll (json/read-json cell-addr-val-coll)]
         (and
-          (vector? kvs)
-          (<= 1 (count kvs))
-          (every? vector? kvs)
-          (every? #(= 3 (count %)) kvs)
-          (every? #(every? integer? (take 2%)) kvs)))
+          (vector? key-value-coll)
+          (<= 1 (count key-value-coll))
+          (every? vector? key-value-coll)
+          (every? #(= 3 (count %)) key-value-coll)
+          (every? #(every? integer? (take 2%)) key-value-coll)))
       (catch Exception e false))))
 
 (defn meet-where-clause-cond
@@ -139,7 +139,7 @@
           :else schema-info))))
 
 (defn selectSS
-  "Select data from excel spreadsheet."
+  "Return JSON string that map collection is selected from excel spreadsheet."
   [schema-file-name xls-file-name select-stmt-json]
   (let [
     schema-info (load-schema-info schema-file-name)
@@ -176,7 +176,7 @@
   (selectSS schema-file-name xls-file-name attrs))
 
 (defn getSSCellValues
-  "Get values from excel spreadsheet."
+  "Return JSON string that value collection is got from excel spreadsheet."
   [xls-file-name sheet-idx addrs]
   (if (not (is-valid-cell-addr-coll addrs))
     (throw (RuntimeException. (str "Invalid cell address list. (" addrs ")")))
@@ -193,24 +193,24 @@
 
 (defn setSSCellValues
   "Set values to excel spreadsheet."
-  [xls-file-name sheet-idx kvs]
-  (if (not (is-valid-cell-addr-val-coll kvs))
-    (throw (RuntimeException. (str "Invalid cell address and value list. (" kvs ")")))
+  [xls-file-name sheet-idx key-value-coll-json]
+  (if (not (is-valid-cell-addr-val-coll key-value-coll-json))
+    (throw (RuntimeException. (str "Invalid cell address and value list. (" key-value-coll-json ")")))
     (let [
-      kvs (json/read-json kvs)
+      key-value-coll (json/read-json key-value-coll-json)
       in (FileInputStream. xls-file-name)]
       (try
         (let [
           workbook (HSSFWorkbook. in)
           sheet (.getSheetAt workbook sheet-idx)]
-          (doseq [kv kvs] (set-cell-value sheet (nth kv 0) (nth kv 1) (nth kv 2)))
+          (doseq [kv key-value-coll] (set-cell-value sheet (nth kv 0) (nth kv 1) (nth kv 2)))
           (with-open [out (FileOutputStream. xls-file-name)]
             (.write workbook out)))
         (finally
           (.close in))))))
 
-(defn -setSSCellValues [xls-file-name sheet-idx kvs]
-  (setSSCellValues xls-file-name sheet-idx kvs))
+(defn -setSSCellValues [xls-file-name sheet-idx key-value-coll-json]
+  (setSSCellValues xls-file-name sheet-idx key-value-coll-json))
 
 (defn insertSS
   "Insert data to excel spreadsheet."
