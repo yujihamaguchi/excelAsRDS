@@ -1,7 +1,7 @@
-excel-as-rds
+excelAsRDS
 ============
 
-Excel as a Relational Data Source
+Treat excel sheet as a relational data source.
 
 ## License
 
