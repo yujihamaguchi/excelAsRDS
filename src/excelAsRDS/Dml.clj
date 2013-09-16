@@ -11,11 +11,11 @@
   (:gen-class
     :name excelAsRDS.Dml
     :methods [
-      #^{:static true} [getSSCellValues [String Integer　String] String]
-      #^{:static true} [setSSCellValues [String Integer　String] void]
-      #^{:static true} [selectSS [String String　String] String]
-      #^{:static true} [updateSS [String String　String] void]
-      #^{:static true} [insertSS [String String　String] void]]))
+      #^{:static true} [getSSCellValues [String Integer String] String]
+      #^{:static true} [setSSCellValues [String Integer String] void]
+      #^{:static true} [selectSS [String String String] String]
+      #^{:static true} [updateSS [String String String] void]
+      #^{:static true} [insertSS [String String String] void]]))
 
 (defn get-cell-value
   "Return a cell value."
