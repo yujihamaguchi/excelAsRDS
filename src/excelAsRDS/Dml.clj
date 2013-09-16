@@ -1,5 +1,4 @@
-(ns ^{:doc "Operate excel sheet as relational data source using Apache POI."
-      :author "Yuji Hamaguchi"}
+(ns ^{:author "Yuji Hamaguchi"}
   excelAsRDS.Dml
   (:require
     [clojure.data.json :as json :only [read-str read-json write-str]]
@@ -18,7 +17,9 @@
       #^{:static true} [updateSS [String String　String] void]
       #^{:static true} [insertSS [String String　String] void]]))
 
-(defn get-cell-value [sheet col-idx row-idx]
+(defn get-cell-value
+  "Return a cell value."
+  [sheet col-idx row-idx]
   (let [row (.getRow sheet row-idx)]
     (if (nil? row)
       ""
@@ -40,13 +41,15 @@
             (= cell-type Cell/CELL_TYPE_BLANK) ""
             (= cell-type Cell/CELL_TYPE_ERROR) ""
             :else ""))
-        ; 列がエクセルの範囲外である場合、空の結果とする
+        ; Out of range for column returns blank value.
         (catch IllegalArgumentException e
           (if (re-find #"^Invalid column index" (.getMessage e))
             ""
             (throw (IllegalArgumentException. (.getMessage e)))))))))
 
-(defn set-cell-value [sheet col-idx row-idx val]
+(defn set-cell-value
+  "Set a cell to a value."
+  [sheet col-idx row-idx val]
   (let [row (.getRow sheet row-idx)]
     (if (nil? row)
       ""
@@ -56,17 +59,19 @@
           (if (integer? val)
             (.setCellValue cell (double val))
             (.setCellValue cell val)))
-          ; 列がエクセルの範囲外である場合、空の結果とする
+          ; Out of range for column returns blank value.
           (catch IllegalArgumentException e
             (if (re-find #"^Invalid column index" (.getMessage e))
               ""
               (throw (IllegalArgumentException. (.getMessage e)))))))))
 
-(defn is-valid-cell-addr-lst [cell-addr-lst]
+(defn is-valid-cell-addr-coll
+  "Returns true if cell address collection is valid, false otherwise."
+  [cell-addr-coll]
   (and
-    (not (empty? cell-addr-lst))
+    (not (empty? cell-addr-coll))
     (try
-      (let [addrs (json/read-json cell-addr-lst)]
+      (let [addrs (json/read-json cell-addr-coll)]
         (and
           (vector? addrs)
           (<= 1 (count addrs))
@@ -75,11 +80,13 @@
           (every? #(every? integer? %) addrs)))
       (catch Exception e false))))
 
-(defn is-valid-cell-addr-val-lst [cell-addr-val-lst]
+(defn is-valid-cell-addr-val-coll
+  "Returns true if cell address and value collection is valid, false otherwise."
+  [cell-addr-val-coll]
   (and
-    (not (empty? cell-addr-val-lst))
+    (not (empty? cell-addr-val-coll))
     (try
-      (let [kvs (json/read-json cell-addr-val-lst)]
+      (let [kvs (json/read-json cell-addr-val-coll)]
         (and
           (vector? kvs)
           (<= 1 (count kvs))
@@ -88,7 +95,9 @@
           (every? #(every? integer? (take 2%)) kvs)))
       (catch Exception e false))))
 
-(defn meet-where-clause-cond [{col-idx-map :columnIndex} sheet row-idx where-clause]
+(defn meet-where-clause-cond
+  "Returns true if a row meets conditions in the WHERE clause, false otherwise."
+  [{col-idx-map :columnIndex} sheet row-idx where-clause]
   (let [cond-keys (keys where-clause)]
     (letfn [(meet-cond [cond-keys]
       (if (empty? cond-keys)
@@ -104,12 +113,15 @@
           (meet-cond (rest cond-keys)))))]
     (meet-cond cond-keys))))
 
-(defn exist-required-value [{col-idx-map :columnIndex required :required} sheet row-idx]
+(defn exist-required-value
+  "Returns true if a row contains required attributes, false otherwise."
+  [{col-idx-map :columnIndex required :required} sheet row-idx]
   (not-any?
     (fn [col-idx] (empty? (get-cell-value sheet col-idx row-idx)))
     (map second (filter (fn [col] ((set (map keyword required)) (first col))) col-idx-map))))
 
-(defn load-schema-info [sch-file]
+(defn load-schema-info [schema-file-name]
+  "Load schema definition."
   (let [
     required-attrs
     #{:sheetIndex
@@ -117,34 +129,33 @@
       :startRowIndex
       :endRowIndex
       :required}
-      schema-info (with-open [rdr (io/reader sch-file)] (json/read-json (apply str (line-seq rdr))))
+      schema-info (with-open [rdr (io/reader schema-file-name)] (json/read-json (apply str (line-seq rdr))))
       diff (set/difference required-attrs (set (keys schema-info)))]
       (if (not (empty? diff))
-        (throw (Exception. (str "Required attributes (" diff ") not exist in file (" sch-file ").")))
+        (throw (Exception. (str "Required attributes (" diff ") not exist in file (" schema-file-name ").")))
         (cond
           (= 0 (count (schema-info :columnIndex)))
-          (throw (Exception. (str "Column index definition (key 'columnIndex') not exist in file (" sch-file ").")))
+          (throw (Exception. (str "Column index definition (key 'columnIndex') not exist in file (" schema-file-name ").")))
           :else schema-info))))
 
 (defn selectSS
-  "select data in excel file."
-  {:static true}
-  [sch-file xls-file select-stmt]
+  "Select data from excel spreadsheet."
+  [schema-file-name xls-file-name select-stmt-json]
   (let [
-    schema-info (load-schema-info sch-file)
-    select-stmt (json/read-json select-stmt)
+    schema-info (load-schema-info schema-file-name)
+    select-stmt (json/read-json select-stmt-json)
     attrs (let [attrs (:attributes select-stmt)] (if (empty? attrs) (map name (keys (schema-info :columnIndex))) attrs))
     where-clause (:whereClause select-stmt)]
-    ; 存在しない属性をSELECT句に指定した場合
+    ; Attribute in select clause does not exists.
     (let [diff (set/difference (set attrs) (set (map name (keys (schema-info :columnIndex)))))]
       (if (not (empty? diff)) (throw (RuntimeException. (str "Attributes (" diff ") not exist in select statement.")))))
-    ; 存在しない属性をWHERE句に指定した場合
+    ; Attribute in where clause does not exists.
     (let [diff (set/difference (set (map name (keys where-clause))) (set (map name (keys (schema-info :columnIndex)))))]
       (if (not (empty? diff)) (throw (RuntimeException. (str "Attributes (" diff ") not exist in where clause.")))))
     (json/write-str
       (if (empty? attrs)
         []
-        (with-open [in (FileInputStream. xls-file)]
+        (with-open [in (FileInputStream. xls-file-name)]
           (let [
             workbook (HSSFWorkbook. in)
             sheet (.getSheetAt workbook (schema-info :sheetIndex))]
@@ -161,45 +172,51 @@
                     (meet-where-clause-cond schema-info sheet % where-clause))
                   (range (schema-info :startRowIndex) (+ 1 (schema-info :endRowIndex))))))))))))
 
-(defn -selectSS [sch-file xls-file attrs]
-  (selectSS sch-file xls-file attrs))
+(defn -selectSS [schema-file-name xls-file-name attrs]
+  (selectSS schema-file-name xls-file-name attrs))
 
-(defn getSSCellValues [xls-file sheet-idx addrs]
-  (if (not (is-valid-cell-addr-lst addrs))
+(defn getSSCellValues
+  "Get values from excel spreadsheet."
+  [xls-file-name sheet-idx addrs]
+  (if (not (is-valid-cell-addr-coll addrs))
     (throw (RuntimeException. (str "Invalid cell address list. (" addrs ")")))
     (let [addrs (json/read-json addrs)]
       (json/write-str
-        (with-open [in (FileInputStream. xls-file)]
+        (with-open [in (FileInputStream. xls-file-name)]
           (let [
             workbook (HSSFWorkbook. in)
             sheet (.getSheetAt workbook sheet-idx)]
             (map (fn [addr] (get-cell-value sheet (first addr) (second addr))) addrs)))))))
 
-(defn -getSSCellValues [xls-file sheet-idx addrs]
-  (getSSCellValues xls-file sheet-idx addrs))
+(defn -getSSCellValues [xls-file-name sheet-idx addrs]
+  (getSSCellValues xls-file-name sheet-idx addrs))
 
-(defn setSSCellValues [xls-file sheet-idx kvs]
-  (if (not (is-valid-cell-addr-val-lst kvs))
+(defn setSSCellValues
+  "Set values to excel spreadsheet."
+  [xls-file-name sheet-idx kvs]
+  (if (not (is-valid-cell-addr-val-coll kvs))
     (throw (RuntimeException. (str "Invalid cell address and value list. (" kvs ")")))
     (let [
       kvs (json/read-json kvs)
-      in (FileInputStream. xls-file)]
+      in (FileInputStream. xls-file-name)]
       (try
         (let [
           workbook (HSSFWorkbook. in)
           sheet (.getSheetAt workbook sheet-idx)]
           (doseq [kv kvs] (set-cell-value sheet (nth kv 0) (nth kv 1) (nth kv 2)))
-          (with-open [out (FileOutputStream. xls-file)]
+          (with-open [out (FileOutputStream. xls-file-name)]
             (.write workbook out)))
         (finally
           (.close in))))))
 
-(defn -setSSCellValues [xls-file sheet-idx kvs]
-  (setSSCellValues xls-file sheet-idx kvs))
+(defn -setSSCellValues [xls-file-name sheet-idx kvs]
+  (setSSCellValues xls-file-name sheet-idx kvs))
 
-(defn insertSS [sch-file xls-file key-value-map-set]
+(defn insertSS
+  "Insert data to excel spreadsheet."
+  [schema-file-name xls-file-name key-value-map-set-json]
   (let [
-    schema-info (load-schema-info sch-file)
+    schema-info (load-schema-info schema-file-name)
     {
       col-idx-map :columnIndex
       stt-row-idx :startRowIndex
@@ -207,14 +224,14 @@
       sheet-idx :sheetIndex
       required :required
     } schema-info
-    kvms (json/read-json key-value-map-set)
-    in (FileInputStream. xls-file)]
+    kvms (json/read-json key-value-map-set-json)
+    in (FileInputStream. xls-file-name)]
     (try
       (let [
         workbook (HSSFWorkbook. in)
         sheet (.getSheetAt workbook sheet-idx)]
         (letfn [
-          ; 値を格納するセルアドレスを付与する
+          ; Generate cell addresses for values.
           (gen-addr-val-map [kvm row-idx]
             (if (empty? kvm)
               ()
@@ -230,7 +247,7 @@
               (filter
                 (complement (fn [kvm]
                   (let [usr-set (set (keys kvm))]
-                  ; 必須属性が不足、存在しない属性を指定した場合は例外とする
+                  ; Required attribute is missing or non-existent attribute is provided.
                   (if
                     (not
                       (and
@@ -238,29 +255,31 @@
                         (empty? (set/difference usr-set col-set))))
                     (throw
                       (RuntimeException.
-                        (str "Record (" kvm ") is not consistent with schema definition in the file (" sch-file ").")))))))
+                        (str "Record (" kvm ") is not consistent with schema definition in the file (" schema-file-name ").")))))))
                 kvms))
             avl-row-idxs (filter
               (complement (partial exist-required-value schema-info sheet))
               (range stt-row-idx (inc end-row-idx)))]
-            ; 空き行が足りない場合は例外とする
+            ; Can't get available row.
             (if (> (count valid-kvms) (count avl-row-idxs))
               (throw
                 (RuntimeException.
                   (str (str (count valid-kvms)) " rows insert failed (all row). Available row count is " (str (count avl-row-idxs)) "."))))                
             (doseq [kv (mapcat #(gen-addr-val-map %1 %2) valid-kvms avl-row-idxs)]
               (set-cell-value sheet (nth kv 0) (nth kv 1) (nth kv 2)))))
-        (with-open [out (FileOutputStream. xls-file)]
+        (with-open [out (FileOutputStream. xls-file-name)]
           (.write workbook out)))
       (finally
         (.close in)))))
 
-(defn -insertSS [sch-file xls-file key-value-map-set]
-  (insertSS sch-file xls-file key-value-map-set))
+(defn -insertSS [schema-file-name xls-file-name key-value-map-set-json]
+  (insertSS schema-file-name xls-file-name key-value-map-set-json))
 
-(defn updateSS [sch-file xls-file update-stmts]
+(defn updateSS
+  "Update data in excel spreadsheet."
+  [schema-file-name xls-file-name update-stmts-json]
   (let [
-    schema-info (load-schema-info sch-file)
+    schema-info (load-schema-info schema-file-name)
     {
       col-idx-map :columnIndex
       stt-row-idx :startRowIndex
@@ -268,8 +287,8 @@
       sheet-idx :sheetIndex
       required :required
     } schema-info
-    update-stmts (json/read-json update-stmts)
-    in (FileInputStream. xls-file)]
+    update-stmts (json/read-json update-stmts-json)
+    in (FileInputStream. xls-file-name)]
     (try
       (let [
         workbook (HSSFWorkbook. in)
@@ -313,14 +332,14 @@
                             (empty? (set/difference usr-where-set col-set))))
                         (throw
                           (RuntimeException.
-                            (str "Record (" kvm ") is not consistent with schema definition in the file (" sch-file ").")))))))
+                            (str "Record (" kvm ") is not consistent with schema definition in the file (" schema-file-name ").")))))))
                   update-stmts))]
             (doseq [kv (mapcat #(gen-addr-val-map-from-upd-stmt %1) valid-upd-stmts)]
               (set-cell-value sheet (nth kv 0) (nth kv 1) (nth kv 2)))))
-        (with-open [out (FileOutputStream. xls-file)]
+        (with-open [out (FileOutputStream. xls-file-name)]
           (.write workbook out)))
       (finally
         (.close in)))))
 
-(defn -updateSS [sch-file xls-file update-stmts]
-  (updateSS sch-file xls-file update-stmts))
+(defn -updateSS [schema-file-name xls-file-name update-stmts-json]
+  (updateSS schema-file-name xls-file-name update-stmts-json))
