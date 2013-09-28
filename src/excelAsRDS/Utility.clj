@@ -21,7 +21,7 @@
 (defn -isEqualJSONStrAsSet [set1-json set2-json]
   (isEqualJSONStrAsSet set1-json set2-json))
 
-(defn differenceJSONStrAsSe
+(defn differenceJSONStrAsSet
   "Returns different arguments. (set1 - set2)"
   [set1-json set2-json]
   (let [

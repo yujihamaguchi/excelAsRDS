@@ -7,6 +7,36 @@
     (org.apache.poi.hssf.usermodel HSSFWorkbook)
     (java.io FileInputStream FileOutputStream)))
 
+(deftest ut-tmp
+  (copy (file "./resources/test_tmp.xls") (file "./resources/work_test_tmp.xls"))
+  (is
+    (= 
+      (do
+        (updateSS
+          "./resources/Password_Request_Weekly.json"
+          "./resources/work_test_tmp.xls"
+          "[ { \"id\" : \"0120_ibadm2\", \"whereClause\" : { \"id\" : \"0120_apiis\" } } ]")
+        (selectSS
+          "./resources/Password_Request_Weekly.json"
+          "./resources/work_test_tmp.xls"
+          "{ \"attributes\" : [\"host\", \"id\", \"emailAddr\"] }")
+      )
+      ""
+    )
+  )
+  (is
+    (=
+      (selectSS
+        "./resources/Password_Request_Weekly.json"
+        "./resources/work_test_tmp.xls"
+        "{ \"attributes\" : [\"host\", \"id\", \"emailAddr\"] }")
+      ""
+    )
+  )
+
+  ; (delete-file "./resources/work_test_tmp.xls")
+)
+
 (deftest ut-get-cell-value
   (testing "get-cell-value(正常系)"
     (let [sheet (.getSheetAt (HSSFWorkbook. (FileInputStream. "./resources/test01.xls")) 0)]
@@ -314,20 +344,20 @@
   (testing "load-schema-info(異常系)"
     (testing "システム必須属性が不足している"
       (is
-        (let [sch-file-name "./resources/test03.json"]
+        (let [schema-file-name-name "./resources/test03.json"]
           (=
-            (try (load-schema-info sch-file-name) (catch Exception e (.getMessage e)))
-            (str "Required attributes (#{:endRowIndex :startRowIndex}) not exist in file (" sch-file-name ").")
+            (try (load-schema-info schema-file-name-name) (catch Exception e (.getMessage e)))
+            (str "Required attributes (#{:endRowIndex :startRowIndex}) not exist in file (" schema-file-name-name ").")
           )
         )
       )
     )
     (testing "列アドレスが未定義"
       (is
-        (let [sch-file-name "./resources/test06.json"]
+        (let [schema-file-name-name "./resources/test06.json"]
           (=
-            (try (load-schema-info sch-file-name) (catch Exception e (.getMessage e)))
-            (str "Column index definition (key 'columnIndex') not exist in file (" sch-file-name ").")
+            (try (load-schema-info schema-file-name-name) (catch Exception e (.getMessage e)))
+            (str "Column index definition (key 'columnIndex') not exist in file (" schema-file-name-name ").")
           )
         )
       )
@@ -492,28 +522,28 @@
   (testing "selectSS(異常系)"
     (testing "スキーマ定義ファイルにて、システム必須属性が不足している"
       (is
-        (let [sch-file-name "./resources/test03.json"]
+        (let [schema-file-name-name "./resources/test03.json"]
           (=
             (try (selectSS
-              sch-file-name
+              schema-file-name-name
               "./resources/test01.xls"
               "{ \"attributes\" : [\"id\", \"pwd\"] }")
             (catch Exception e (.getMessage e)))
-            (str "Required attributes (#{:endRowIndex :startRowIndex}) not exist in file (" sch-file-name ").")
+            (str "Required attributes (#{:endRowIndex :startRowIndex}) not exist in file (" schema-file-name-name ").")
           )
         )
       )
     )
     (testing "スキーマ定義ファイルにて、列アドレスが未定義"
       (is
-        (let [sch-file-name "./resources/test06.json"]
+        (let [schema-file-name-name "./resources/test06.json"]
           (=
             (try (selectSS
-              sch-file-name
+              schema-file-name-name
               "./resources/test01.xls"
               "{ \"attributes\" : [\"id\", \"pwd\"] }")
             (catch Exception e (.getMessage e)))
-            (str "Column index definition (key 'columnIndex') not exist in file (" sch-file-name ").")
+            (str "Column index definition (key 'columnIndex') not exist in file (" schema-file-name-name ").")
           )
         )
       )
@@ -628,54 +658,54 @@
   )
 )
 
-(deftest ut-is-valid-cell-addr-lst
-  (testing "is-valid-cell-addr-lst(正常系)"
-    (is (= (is-valid-cell-addr-lst "[[1,2]]") true ) )
-    (is (= (is-valid-cell-addr-lst "[[1,2],[3,4]]") true ) )
-    (is (= (is-valid-cell-addr-lst "") false ) )
-    (is (= (is-valid-cell-addr-lst "1") false ) )
-    (is (= (is-valid-cell-addr-lst "[]") false ) )
-    (is (= (is-valid-cell-addr-lst "[1]") false ) )
-    (is (= (is-valid-cell-addr-lst "[[1,2],1]") false ) )
-    (is (= (is-valid-cell-addr-lst "[1,[1,2]]") false ) )
-    (is (= (is-valid-cell-addr-lst "[[1,2],[3,4,5]]") false ) )
-    (is (= (is-valid-cell-addr-lst "[[1,2,3],[4,5]]") false ) )
-    (is (= (is-valid-cell-addr-lst "[[1],[4,5]]") false ) )
-    (is (= (is-valid-cell-addr-lst "[[1,2],[]]") false ) )
-    (is (= (is-valid-cell-addr-lst "[1,2]") false ) )
-    (is (= (is-valid-cell-addr-lst "[[]]") false ) )
-    (is (= (is-valid-cell-addr-lst "[[1]]") false ) )
-    (is (= (is-valid-cell-addr-lst "{}") false ) )
-    (is (= (is-valid-cell-addr-lst "[[1,2],[3,\"x\"]]") false ) )
-    (is (= (is-valid-cell-addr-lst "[[1,2],[\"x\",3]]") false ) )
-    (is (= (is-valid-cell-addr-lst "[[1,\"x\"],[3,4]]") false ) )
-    (is (= (is-valid-cell-addr-lst "[[\"x\",2],[3,4]]") false ) )
+(deftest ut-is-valid-cell-addr-coll
+  (testing "is-valid-cell-addr-coll(正常系)"
+    (is (= (is-valid-cell-addr-coll "[[1,2]]") true ) )
+    (is (= (is-valid-cell-addr-coll "[[1,2],[3,4]]") true ) )
+    (is (= (is-valid-cell-addr-coll "") false ) )
+    (is (= (is-valid-cell-addr-coll "1") false ) )
+    (is (= (is-valid-cell-addr-coll "[]") false ) )
+    (is (= (is-valid-cell-addr-coll "[1]") false ) )
+    (is (= (is-valid-cell-addr-coll "[[1,2],1]") false ) )
+    (is (= (is-valid-cell-addr-coll "[1,[1,2]]") false ) )
+    (is (= (is-valid-cell-addr-coll "[[1,2],[3,4,5]]") false ) )
+    (is (= (is-valid-cell-addr-coll "[[1,2,3],[4,5]]") false ) )
+    (is (= (is-valid-cell-addr-coll "[[1],[4,5]]") false ) )
+    (is (= (is-valid-cell-addr-coll "[[1,2],[]]") false ) )
+    (is (= (is-valid-cell-addr-coll "[1,2]") false ) )
+    (is (= (is-valid-cell-addr-coll "[[]]") false ) )
+    (is (= (is-valid-cell-addr-coll "[[1]]") false ) )
+    (is (= (is-valid-cell-addr-coll "{}") false ) )
+    (is (= (is-valid-cell-addr-coll "[[1,2],[3,\"x\"]]") false ) )
+    (is (= (is-valid-cell-addr-coll "[[1,2],[\"x\",3]]") false ) )
+    (is (= (is-valid-cell-addr-coll "[[1,\"x\"],[3,4]]") false ) )
+    (is (= (is-valid-cell-addr-coll "[[\"x\",2],[3,4]]") false ) )
   )
 )
 
-(deftest ut-is-valid-cell-addr-val-lst
-  (testing "is-valid-cell-addr-val-lst(正常系)"
-    (is (= (is-valid-cell-addr-val-lst "[[1,2,3]]") true ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1,2,3],[3,4,\"x\"]]") true ) )
-    (is (= (is-valid-cell-addr-val-lst "") false ) )
-    (is (= (is-valid-cell-addr-val-lst "1") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[1]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1,2,3],1]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1,2],[1,2,3]]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1,2,3],[3,4,5,6]]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1,2,3,4],[4,5,6]]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1,2],[3,4,5]]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1,2,3],[]]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[1,2,3]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[]]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1]]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1,2]]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "{}") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1,2,3],[3,\"x\",4]]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1,2,3],[\"x\",3,4]]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[1,\"x\",3],[3,4,5]]") false ) )
-    (is (= (is-valid-cell-addr-val-lst "[[\"x\",2,3],[3,4,5]]") false ) )
+(deftest ut-is-valid-cell-addr-val-coll
+  (testing "is-valid-cell-addr-val-coll(正常系)"
+    (is (= (is-valid-cell-addr-val-coll "[[1,2,3]]") true ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1,2,3],[3,4,\"x\"]]") true ) )
+    (is (= (is-valid-cell-addr-val-coll "") false ) )
+    (is (= (is-valid-cell-addr-val-coll "1") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[1]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1,2,3],1]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1,2],[1,2,3]]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1,2,3],[3,4,5,6]]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1,2,3,4],[4,5,6]]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1,2],[3,4,5]]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1,2,3],[]]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[1,2,3]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[]]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1]]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1,2]]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "{}") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1,2,3],[3,\"x\",4]]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1,2,3],[\"x\",3,4]]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[1,\"x\",3],[3,4,5]]") false ) )
+    (is (= (is-valid-cell-addr-val-coll "[[\"x\",2,3],[3,4,5]]") false ) )
   )
 )
 
@@ -1117,30 +1147,30 @@
   (testing "insertSS(異常系)"
     (testing "存在しない属性を指定"
       (is
-        (let [sch-file-name "./resources/test01.json"]
+        (let [schema-file-name-name "./resources/test01.json"]
           (=
             (try
               (insertSS
-                sch-file-name
+                schema-file-name-name
                 "./resources/test11.xls"
                 "[ { \"id\" : \"x\", \"pwd\" : \"p1\", \"notexistattr\" \"p1\"}, { \"id\" : \"y\", \"pwd\" : \"p2\" }]")
               (catch Exception e (.getMessage e)))
-            (str "Record ({:id \"x\", :pwd \"p1\", :notexistattr \"p1\"}) is not consistent with schema definition in the file (" sch-file-name ").")
+            (str "Record ({:id \"x\", :pwd \"p1\", :notexistattr \"p1\"}) is not consistent with schema definition in the file (" schema-file-name-name ").")
           )
         )
       )
     )
     (testing "必須属性を未指定"
       (is
-        (let [sch-file-name "./resources/test01.json"]
+        (let [schema-file-name-name "./resources/test01.json"]
           (=
             (try
               (insertSS
-                sch-file-name
+                schema-file-name-name
                 "./resources/test11.xls"
                 "[ { \"id\" : \"x\", \"pwd\" : \"p1\" }, { \"pwd\" : \"p2\" }]")
               (catch Exception e (.getMessage e)))
-            (str "Record ({:pwd \"p2\"}) is not consistent with schema definition in the file (" sch-file-name ").")
+            (str "Record ({:pwd \"p2\"}) is not consistent with schema definition in the file (" schema-file-name-name ").")
           )
         )
       )
@@ -1351,48 +1381,48 @@
   (testing "updateSS(異常系)"
     (testing "存在しない属性を値に指定"
       (is
-        (let [sch-file-name "./resources/test08.json"]
+        (let [schema-file-name-name "./resources/test08.json"]
           (=
             (try
               (updateSS
-                sch-file-name
+                schema-file-name-name
                 "./resources/test12.xls"
                 "[ { \"pwd\" : \"p11\", \"whereClause\" : { \"id\" : \"x\" } }
                  , { \"notexistattr\" : \"p22\", \"whereClause\" : { \"id\" : \"y\" } } ]")
               (catch Exception e (.getMessage e)))
-            (str "Record ({:notexistattr \"p22\", :whereClause {:id \"y\"}}) is not consistent with schema definition in the file (" sch-file-name ").")
+            (str "Record ({:notexistattr \"p22\", :whereClause {:id \"y\"}}) is not consistent with schema definition in the file (" schema-file-name-name ").")
           )
         )
       )
     )
     (testing "存在しない属性をwhere句に指定"
       (is
-        (let [sch-file-name "./resources/test08.json"]
+        (let [schema-file-name-name "./resources/test08.json"]
           (=
             (try
               (updateSS
-                sch-file-name
+                schema-file-name-name
                 "./resources/test12.xls"
                 "[ { \"pwd\" : \"p11\", \"whereClause\" : { \"id\" : \"x\" } }
                  , { \"pwd\" : \"p22\", \"whereClause\" : { \"notexistattr\" : \"y\" } } ]")
               (catch Exception e (.getMessage e)))
-            (str "Record ({:pwd \"p22\", :whereClause {:notexistattr \"y\"}}) is not consistent with schema definition in the file (" sch-file-name ").")
+            (str "Record ({:pwd \"p22\", :whereClause {:notexistattr \"y\"}}) is not consistent with schema definition in the file (" schema-file-name-name ").")
           )
         )
       )
     )
     (testing "必須属性を空に更新"
       (is
-        (let [sch-file-name "./resources/test08.json"]
+        (let [schema-file-name-name "./resources/test08.json"]
           (=
             (try
               (updateSS
-                sch-file-name
+                schema-file-name-name
                 "./resources/test12.xls"
                 "[ { \"pwd\" : \"p11\", \"whereClause\" : { \"id\" : \"x\" } }
                  , { \"host\" : \"\", \"whereClause\" : { \"id\" : \"y\" } } ]")
               (catch Exception e (.getMessage e)))
-            (str "Record ({:host \"\", :whereClause {:id \"y\"}}) is not consistent with schema definition in the file (" sch-file-name ").")
+            (str "Record ({:host \"\", :whereClause {:id \"y\"}}) is not consistent with schema definition in the file (" schema-file-name-name ").")
           )
         )
       )
