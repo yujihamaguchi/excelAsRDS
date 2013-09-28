@@ -7,36 +7,6 @@
     (org.apache.poi.hssf.usermodel HSSFWorkbook)
     (java.io FileInputStream FileOutputStream)))
 
-(deftest ut-tmp
-  (copy (file "./resources/test_tmp.xls") (file "./resources/work_test_tmp.xls"))
-  (is
-    (= 
-      (do
-        (updateSS
-          "./resources/Password_Request_Weekly.json"
-          "./resources/work_test_tmp.xls"
-          "[ { \"id\" : \"0120_ibadm2\", \"whereClause\" : { \"id\" : \"0120_apiis\" } } ]")
-        (selectSS
-          "./resources/Password_Request_Weekly.json"
-          "./resources/work_test_tmp.xls"
-          "{ \"attributes\" : [\"host\", \"id\", \"emailAddr\"] }")
-      )
-      ""
-    )
-  )
-  (is
-    (=
-      (selectSS
-        "./resources/Password_Request_Weekly.json"
-        "./resources/work_test_tmp.xls"
-        "{ \"attributes\" : [\"host\", \"id\", \"emailAddr\"] }")
-      ""
-    )
-  )
-
-  ; (delete-file "./resources/work_test_tmp.xls")
-)
-
 (deftest ut-get-cell-value
   (testing "get-cell-value(正常系)"
     (let [sheet (.getSheetAt (HSSFWorkbook. (FileInputStream. "./resources/test01.xls")) 0)]
