@@ -139,7 +139,7 @@
           :else schema-info))))
 
 (defn selectSS
-  "Return JSON string that map collection is selected from excel spreadsheet."
+  "Returns JSON string that map collection is selected from excel spreadsheet."
   [schema-file-name xls-file-name select-stmt-json]
   (let [
     schema-info (load-schema-info schema-file-name)
