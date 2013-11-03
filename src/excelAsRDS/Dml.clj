@@ -66,7 +66,7 @@
               (throw (IllegalArgumentException. (.getMessage e)))))))))
 
 (defn set-cell-formula
-  "Set a cell to a formula."
+  "Set a cell to a excel formula."
   [sheet col-idx row-idx formula]
   (let [row (.getRow sheet row-idx)]
     (if (nil? row)
