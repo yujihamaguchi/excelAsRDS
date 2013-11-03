@@ -7,6 +7,20 @@
     (org.apache.poi.hssf.usermodel HSSFWorkbook)
     (java.io FileInputStream FileOutputStream)))
 
+(deftest ut-testes
+  (let [sheet (.getSheetAt (HSSFWorkbook. (FileInputStream. "./resources/test999.xls")) 0)]
+    (is
+      (=
+        (do
+          (set-cell-formula sheet 2 0 "A1+B1")
+          (get-cell-value sheet 2 0)
+        )
+        2.0
+      )
+    )
+  )
+)
+
 (deftest ut-get-cell-value
   (testing "get-cell-value(正常系)"
     (let [sheet (.getSheetAt (HSSFWorkbook. (FileInputStream. "./resources/test01.xls")) 0)]

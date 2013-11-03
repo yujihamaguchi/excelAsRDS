@@ -65,6 +65,23 @@
               ""
               (throw (IllegalArgumentException. (.getMessage e)))))))))
 
+(defn set-cell-formula
+  "Set a cell to a formula."
+  [sheet col-idx row-idx formula]
+  (let [row (.getRow sheet row-idx)]
+    (if (nil? row)
+      ""
+      (try
+        (let [
+          cell (.getCell row col-idx (. Row CREATE_NULL_AS_BLANK))]
+          (.setCellFormula cell formula))
+          ; Out of range for column returns blank value.
+          (catch IllegalArgumentException e
+            (if (re-find #"^Invalid column index" (.getMessage e))
+              ""
+              (throw (IllegalArgumentException. (.getMessage e)))))))))
+
+
 (defn is-valid-cell-addr-coll
   "Returns true if cell address collection is valid, false otherwise."
   [cell-addr-coll]
