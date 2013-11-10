@@ -6,7 +6,7 @@
     [clojure.java.io :as io :only [reader]])
   (:import
     (org.apache.poi.ss.usermodel Row Cell DateUtil)
-    (org.apache.poi.hssf.usermodel HSSFWorkbook HSSFCell HSSFDataFormatter HSSFFormulaEvaluator)
+    (org.apache.poi.ss.usermodel Workbook WorkbookFactory Cell DataFormatter FormulaEvaluator)
     (java.io File FileInputStream FileOutputStream))
   (:gen-class
     :name excelAsRDS.Dml
@@ -35,7 +35,7 @@
             (= cell-type Cell/CELL_TYPE_BOOLEAN) (.getBooleanValue cell-value)
             (= cell-type Cell/CELL_TYPE_NUMERIC)
               (if (DateUtil/isCellDateFormatted cell)
-                (.formatRawCellContents (HSSFDataFormatter.) (.getNumericCellValue cell) -1 "yyyy/mm/dd")
+                (.formatRawCellContents (DataFormatter.) (.getNumericCellValue cell) -1 "yyyy/mm/dd")
                 (.getNumberValue cell-value))
             (= cell-type Cell/CELL_TYPE_STRING) (.getStringValue cell-value)
             (= cell-type Cell/CELL_TYPE_BLANK) ""
@@ -174,7 +174,7 @@
         []
         (with-open [in (FileInputStream. xls-file-name)]
           (let [
-            workbook (HSSFWorkbook. in)
+            workbook (WorkbookFactory/create in)
             sheet (.getSheetAt workbook (schema-info :sheetIndex))]
             (set
               (map
@@ -201,7 +201,7 @@
       (json/write-str
         (with-open [in (FileInputStream. xls-file-name)]
           (let [
-            workbook (HSSFWorkbook. in)
+            workbook (WorkbookFactory/create in)
             sheet (.getSheetAt workbook sheet-idx)]
             (map (fn [addr] (get-cell-value sheet (first addr) (second addr))) addrs)))))))
 
@@ -218,7 +218,7 @@
       in (FileInputStream. xls-file-name)]
       (try
         (let [
-          workbook (HSSFWorkbook. in)
+          workbook (WorkbookFactory/create in)
           sheet (.getSheetAt workbook sheet-idx)]
           (doseq [kv key-value-coll] (set-cell-value sheet (nth kv 0) (nth kv 1) (nth kv 2)))
           (with-open [out (FileOutputStream. xls-file-name)]
@@ -245,7 +245,7 @@
     in (FileInputStream. xls-file-name)]
     (try
       (let [
-        workbook (HSSFWorkbook. in)
+        workbook (WorkbookFactory/create in)
         sheet (.getSheetAt workbook sheet-idx)]
         (letfn [
           ; Generate cell addresses for values.
@@ -308,7 +308,7 @@
     in (FileInputStream. xls-file-name)]
     (try
       (let [
-        workbook (HSSFWorkbook. in)
+        workbook (WorkbookFactory/create in)
         sheet (.getSheetAt workbook sheet-idx)]
         (letfn [
           (gen-addr-val-map-from-upd-stmt [upd-stmt]
