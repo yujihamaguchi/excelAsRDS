@@ -4,23 +4,43 @@
     [excelAsRDS.Dml :refer :all]
     [clojure.java.io :refer :all])
   (:import
-    (org.apache.poi.ss.usermodel Workbook WorkbookFactory Name)
+    (org.apache.poi.ss.usermodel Workbook WorkbookFactory Name Row Cell)
     (org.apache.poi.ss.util AreaReference CellReference)
     (java.io FileInputStream FileOutputStream)))
 
 (deftest tmp
   (let [
     wb (WorkbookFactory/create (FileInputStream. "./resources/tmp.xls"))
-    ; sheet (.getSheetAt wb 1)
-    ; arefs (AreaReference/generateContiguous (.getRefersToFormula (.getNameAt wb (.getNameIndex wb "kvs_cr_stat"))))
+    sheet (.getSheetAt wb 1)
+    row (.getRow sheet 0)
+    cell1 (.getCell row 0 (. Row CREATE_NULL_AS_BLANK))
+    cell2 (.getCell row 1 (. Row CREATE_NULL_AS_BLANK))
+    cell3 (.getCell row 2 (. Row CREATE_NULL_AS_BLANK))
+    cell4 (.getCell row 3 (. Row CREATE_NULL_AS_BLANK))
+    cell5 (.getCell row 4 (. Row CREATE_NULL_AS_BLANK))
+    ev (.createFormulaEvaluator (.getCreationHelper wb))
+    from-row-idx (do
+      (.setCellFormula cell1 "MATCH(\"cr_stat\",mst!$A$1:$A$500,0)")
+      (.intValue (.getNumberValue (.evaluate ev cell1))))
+    tmp1 (do
+      (.setCellFormula cell2 "ROW(mst!$A$1:$A$500)")
+      (.intValue (.getNumberValue (.evaluate ev cell2))))
+    to-row-idx (do
+      (.setCellFormula cell3 "INDEX((mst!$A$1:$A$500=\"cr_stat\")*1, )")
+      (.intValue (.getNumberValue (.evaluate ev cell3))))
+    ; arefs (AreaReference/generateContiguous (.getReference (.getNameAt wb (.getNameIndex wb "kvs_cr_stat"))))
     ; crefs (.getCells (nth arefs 0))
     ]
     (is
       (=
         (do
-          (println (.getRefersToFormula (.getNameAt wb (.getNameIndex wb "kvs_cr_stat"))))
-          ; (set-cell-formula sheet 75 7 (str "VLOOKUP(N8," (.formatAsString crefs) ",2,FALSE)"))
-          ; (get-cell-value sheet 75 7)
+          (println (.getRefersToFormula (.getNameAt wb (.getNameIndex wb "kvs_cr_stat2"))))
+          ; (.setCellFormula cell "MATCH(\"cr_stat\",mst!$A$1:$A$500,0)")
+          ; (println (.intValue (.getNumberValue (.evaluate ev cell))))
+          (println from-row-idx)
+          (println to-row-idx)
+          (set-cell-formula sheet 75 7 (str "VLOOKUP(N8, mst!B2:C10, 2, FALSE)"))
+          (get-cell-value sheet 75 7)
         )
         "OP"
       )
