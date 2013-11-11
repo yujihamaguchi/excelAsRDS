@@ -17,6 +17,7 @@
       #^{:static true} [updateSS [String String String] void]
       #^{:static true} [insertSS [String String String] void]]))
 
+
 (defn get-cell-value
   "Return a cell value."
   [sheet col-idx row-idx]

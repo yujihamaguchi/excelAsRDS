@@ -4,8 +4,29 @@
     [excelAsRDS.Dml :refer :all]
     [clojure.java.io :refer :all])
   (:import
-    (org.apache.poi.ss.usermodel Workbook WorkbookFactory)
+    (org.apache.poi.ss.usermodel Workbook WorkbookFactory Name)
+    (org.apache.poi.ss.util AreaReference CellReference)
     (java.io FileInputStream FileOutputStream)))
+
+(deftest tmp
+  (let [
+    wb (WorkbookFactory/create (FileInputStream. "./resources/tmp.xls"))
+    ; sheet (.getSheetAt wb 1)
+    ; arefs (AreaReference/generateContiguous (.getRefersToFormula (.getNameAt wb (.getNameIndex wb "kvs_cr_stat"))))
+    ; crefs (.getCells (nth arefs 0))
+    ]
+    (is
+      (=
+        (do
+          (println (.getRefersToFormula (.getNameAt wb (.getNameIndex wb "kvs_cr_stat"))))
+          ; (set-cell-formula sheet 75 7 (str "VLOOKUP(N8," (.formatAsString crefs) ",2,FALSE)"))
+          ; (get-cell-value sheet 75 7)
+        )
+        "OP"
+      )
+    )
+  )
+)
 
 (deftest ut-get-cell-value
   (testing "get-cell-value(正常系)"
