@@ -8,6 +8,145 @@
     (org.apache.poi.ss.util AreaReference CellReference)
     (java.io FileInputStream FileOutputStream)))
 
+(deftest work1
+  (is
+    (=
+      (selectSS
+        "./resources/SDM_TRM_IN_VIEW.json"
+        "./resources/tmp.xls"
+        "{ \"attributes\" : [
+            \"ref_num\"
+            , \"priority\"
+            , \"type\"
+            , \"customer\"
+            , \"active_flag\"
+            , \"zsupport_num\"
+            , \"zcmp_nm\"
+            , \"zprd_nm\"
+            , \"zbiz_kind\"
+            , \"zfun_kind\"
+            , \"zsubsystem\"
+            , \"zversion\"
+            , \"group_id\"
+            , \"category\"
+            , \"status\"
+            , \"log_agent\"
+            , \"requested_by\"
+            , \"zrequested_by_free\"
+            , \"zreq_email_address_free\"
+            , \"zreq_phone_number_free\"
+            , \"zreq_dept_nm_free\"
+            , \"zseverity\"
+            , \"zreq_res_date\"
+            , \"summary\"
+            , \"zoccurred_date\"
+            , \"description\"
+            , \"zbiz_kind_csv\"
+            , \"zfun_etc\"
+            , \"zprd_attr_csv\"
+            , \"zreceipt\"
+            , \"zrequest_type\"
+            , \"zin_src\"
+            , \"zserious_in_flg\"        
+        ] \"whereClause\" { \"load_flg\" : \"○\" }}")
+      "[]"
+    )
+  )
+)
+
+(deftest work2
+  (is
+    (=
+      (selectSS
+        "./resources/SDM_TRM_IN_VIEW.json"
+        "./resources/tmp.xls"
+"{ \"attributes\" : [
+    \"ref_num\"
+    , \"assignee\"
+    , \"urgency\"
+    , \"impact\"
+    , \"zdateline_date\"
+    , \"zinc_cnt_stat\"
+    , \"zenvironment\"
+    , \"znum_free\"
+    , \"zresult\"
+    , \"zcost\"
+    , \"zpost_review_flg\"
+    , \"zpost_review_fin_flg\"
+    , \"zapprover\"
+    , \"zapprover_free\"
+    , \"zapp_email_address_free\"
+    , \"zapp_phone_number_free\"
+    , \"zapp_dept_nm_free\"
+    , \"open_date\"
+    , \"last_mod_dt\"
+    , \"resolve_date\"
+    , \"close_date\"
+    , \"zdev_num\"
+    , \"zdev_kind\"
+    , \"zsrc_kind\"
+    , \"zprim_solve_flg\"
+    , \"zprim_solver_nm\"
+    , \"zworkaround_solve_flg\"
+    , \"last_mod_by\"
+] \"whereClause\" { \"load_flg\" : \"○\" }}")
+      "[]"
+    )
+  )
+)
+
+
+(deftest tmp0
+  (let [
+    wb (WorkbookFactory/create (FileInputStream. "./resources/tmp.xls"))
+    sheet (.getSheetAt wb 1)
+    zreq_res_date (get-cell-value sheet 73 7 "TEXT(MONTH(P_ROWIDX_), \"00\")&\"/\"&TEXT(DAY(P_ROWIDX_), \"00\")&\"/\"&YEAR(P_ROWIDX_)&\" \"&TEXT(HOUR(P_ROWIDX_), \"00\")&\":\"&TEXT(MINUTE(P_ROWIDX_), \"00\")&\":\"&TEXT(SECOND(P_ROWIDX_), \"00\")")
+    ]
+    (is
+      (= zreq_res_date "D42CEC859D4F61498EA21CF4876C65B2")
+    )
+  )
+)
+
+(deftest ut-get-cell-value-with-formula
+  (testing "get-cell-value(正常系)"
+    (let [sheet (.getSheetAt (WorkbookFactory/create (FileInputStream. "./resources/test14.xls")) 0)]
+      (testing "文字列"
+        (is
+          (=
+            (get-cell-value sheet 2 3 "A_ROWIDX_&B_ROWIDX_")
+            "xx"
+          )
+        )
+      )
+      (testing "空文字"  
+        (is
+          (=
+            (get-cell-value sheet 2 6 "A_ROWIDX_&B_ROWIDX_")
+            ""
+          )
+        )
+      )
+      (testing "数値"
+        (is
+          (==
+            (get-cell-value sheet 2 7 "A_ROWIDX_*B_ROWIDX_")
+            300
+          )
+        )
+      )
+      (testing "日付"
+        (is
+          (=
+            (get-cell-value sheet 2 8 "A_ROWIDX_+1")
+            "2013/11/14"
+          )
+        )
+      )
+    )
+  )
+)
+
 (deftest tmp1
   (let [
     wb (WorkbookFactory/create (FileInputStream. "./resources/tmp.xls"))
