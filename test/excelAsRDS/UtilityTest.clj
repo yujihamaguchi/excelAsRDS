@@ -3,6 +3,21 @@
     [clojure.test :refer :all]
     [excelAsRDS.Utility :refer :all]))
 
+(deftest ut-selectDB
+  (testing "0要素(オブジェクト)が等しい"
+    (is
+      (=
+        (selectDB
+          "com.microsoft.jdbc.sqlserver.SQLServerDriver"
+          "sqlserver"
+          "//localhost:1433;database=mrose;user=hu2;password=rinusq31"
+          "SELECT * FROM test")
+        "[{\"val\":\"0\"},{\"val\":\"1\"},{\"val\":\"2\"},{\"val\":\"3\"}]"
+      )
+    )
+  )
+)
+
 (deftest ut-isEqualJSONStrAsSet
   (testing "isEqualJSONStrAsSet(正常系)"
     (testing "0要素(オブジェクト)が等しい"

@@ -2,12 +2,14 @@
   excelAsRDS.Utility
   (:use
     [clojure.data.json :as json :only [read-json write-str]]
-    clojure.set)
+    clojure.set
+    clojure.java.jdbc)
   (:gen-class
     :name excelAsRDS.Utility
     :methods [
       #^{:static true} [isEqualJSONStrAsSet [String String] Boolean]
       #^{:static true} [differenceJSONStrAsSet [String String] String]
+      #^{:static true} [selectDB [String String String String] String]
     ]))
 
 (defn isEqualJSONStrAsSet
@@ -31,3 +33,16 @@
 
 (defn -differenceJSONStrAsSet [set1-json set2-json]
   (differenceJSONStrAsSet set1-json set2-json))
+
+(defn selectDB
+  "Return query result AS JSON string."
+  [classname subprotocol subname query-str]
+  (let [db {
+    :classname classname
+    :subprotocol subprotocol
+    :subname subname}]
+    (json/write-str (query db [query-str]))))
+
+(defn -selectDB
+  [classname subprotocol subname query-str]
+  (selectDB classname subprotocol subname query-str))
