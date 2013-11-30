@@ -17,10 +17,24 @@
       #^{:static true} [updateSS [String String String] void]
       #^{:static true} [insertSS [String String String] void]]))
 
+(declare
+  get-cell-value
+  set-cell-value
+  set-cell-formula
+  is-valid-cell-addr-coll
+  is-valid-cell-addr-val-coll
+  meet-where-clause-cond
+  exist-required-value
+  load-schema-info
+  selectSS
+  getSSCellValues
+  setSSCellValues
+  insertSS
+  updateSS)
 
 (defn get-cell-value
   "Return a cell value."
-  [sheet col-idx row-idx]
+  ([sheet col-idx row-idx]
   (let [row (.getRow sheet row-idx)]
     (if (nil? row)
       ""
@@ -36,7 +50,10 @@
             (= cell-type Cell/CELL_TYPE_BOOLEAN) (.getBooleanValue cell-value)
             (= cell-type Cell/CELL_TYPE_NUMERIC)
               (if (DateUtil/isCellDateFormatted cell)
-                (.formatRawCellContents (DataFormatter.) (.getNumericCellValue cell) -1 "yyyy/mm/dd")
+                ; (do (println (.formatRawCellContents (DataFormatter.) (.getNumberValue cell-value) -1 "yyyy/mm/dd"))
+                ; ; (.formatRawCellContents (DataFormatter.) (.getNumericCellValue cell) -1 "yyyy/mm/dd")
+                ; )
+                (.formatRawCellContents (DataFormatter.) (.getNumberValue cell-value) -1 "yyyy/mm/dd")
                 (.getNumberValue cell-value))
             (= cell-type Cell/CELL_TYPE_STRING) (.getStringValue cell-value)
             (= cell-type Cell/CELL_TYPE_BLANK) ""
@@ -47,6 +64,10 @@
           (if (re-find #"^Invalid column index" (.getMessage e))
             ""
             (throw (IllegalArgumentException. (.getMessage e)))))))))
+  ([sheet col-idx row-idx formula]
+    (set-cell-formula sheet col-idx row-idx (clojure.string/replace formula "_ROWIDX_" (str (inc row-idx))))
+    (get-cell-value sheet col-idx row-idx)))
+
 
 (defn set-cell-value
   "Set a cell to a value."
@@ -138,8 +159,9 @@
     (fn [col-idx] (empty? (get-cell-value sheet col-idx row-idx)))
     (map second (filter (fn [col] ((set (map keyword required)) (first col))) col-idx-map))))
 
-(defn load-schema-info [schema-file-name]
+(defn load-schema-info
   "Load schema definition."
+  [schema-file-name]
   (let [
     required-attrs
     #{:sheetIndex
@@ -182,7 +204,11 @@
                 #(apply hash-map
                   (mapcat
                     (fn [attr]
-                      [attr (get-cell-value sheet ((schema-info :columnIndex) (keyword attr)) %)])
+                      (if (and
+                        (schema-info :excelFormula)
+                        ((schema-info :excelFormula) (keyword attr)))
+                        [attr (get-cell-value sheet ((schema-info :columnIndex) (keyword attr)) % ((schema-info :excelFormula) (keyword attr)))]
+                        [attr (get-cell-value sheet ((schema-info :columnIndex) (keyword attr)) %)]))
                     attrs))
                 (filter
                   #(and
