@@ -10,8 +10,8 @@
         (selectDB
           "com.microsoft.jdbc.sqlserver.SQLServerDriver"
           "sqlserver"
-          "//localhost:1433;database=mrose;user=hu2;password=rinusq31"
-          "SELECT * FROM test")
+          "//spam13:1433;database=mdb;user=ServiceDesk;password=Passw0rd"
+          "SELECT * FROM ca_contact")
         "[{\"val\":\"0\"},{\"val\":\"1\"},{\"val\":\"2\"},{\"val\":\"3\"}]"
       )
     )

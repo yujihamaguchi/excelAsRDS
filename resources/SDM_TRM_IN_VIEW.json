@@ -2,10 +2,15 @@
   "sheetIndex" : 1
   "columnIndex" : {
     "load_flg" : 0
-    "update_flg" : 3
-    "ref_num" : 53
-    "priority" : 53
-    "type" : 53
+    "insert_flg" : 1
+    "update_flg" : 2
+    "invalid_flg" : 3
+    "raw_persid" : 4
+    "update_cols" : 53
+    "ref_num" : 111
+    "persid" : 111
+    "priority" : 111
+    "type" : 111
     "customer" : 54
     "active_flag" : 55
     "zsupport_num" : 56
@@ -66,6 +71,7 @@
   }
   "excelFormula" : {
     "ref_num" : "F_ROWIDX_"
+    "persid" : "E_ROWIDX_"
     "priority" : "\"0\""
     "type" : "\"I\""
     "customer" : "IF(G_ROWIDX_<>\"\",INDEX(acc!$C:$C,MATCH(G_ROWIDX_,acc!$B:$B,0)),\"\")"
