@@ -11,4 +11,5 @@
     excelAsRDS.Dml
     excelAsRDS.Utility
   ]
+  :jvm-opts ["-Xmx768m"] 
 )
