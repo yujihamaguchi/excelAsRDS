@@ -302,10 +302,10 @@
           (let [valid-kvms (let [req-set (set (map keyword required))
                                  col-set (set (keys col-idx-map))]
                              (filter (complement (fn [kvm]
-                                                   (let [usr-set (set (keys kvm))]
+                                                   (let [upd-k-set (set (keys kvm))]
                                                      ; Required attribute is missing or non-existent attribute is provided.
-                                                     (when-not (and (empty? (set/difference req-set usr-set))
-                                                                    (empty? (set/difference usr-set col-set)))
+                                                     (when-not (and (empty? (set/difference req-set upd-k-set))
+                                                                    (empty? (set/difference upd-k-set col-set)))
                                                        (throw (RuntimeException. (str "Record (" kvm ") is not consistent with schema definition in the file (" schema-file-name ").")))))))
                                      kvms))
                 avl-row-idxs (filter (complement (partial exist-required-value
@@ -370,13 +370,13 @@
           (let [valid-upd-stmts (let [req-set (set (map keyword required))
                                       col-set (set (keys col-idx-map))]
                                   (filter (complement (fn [kvm]
-                                                        (let [usr-map (dissoc kvm :whereClause)
-                                                              usr-set (set (keys usr-map))
-                                                              usr-null-set (set (keys (filter #(empty? (val %)) usr-map)))
-                                                              usr-where-set (set (keys (kvm :whereClause)))]
-                                                          (if-not (and (empty? (set/difference usr-set col-set))
-                                                                       (= req-set (set/difference req-set usr-null-set))
-                                                                       (empty? (set/difference usr-where-set col-set)))
+                                                        (let [upd-kv-map (dissoc kvm :whereClause)
+                                                              upd-k-set (set (keys upd-kv-map))
+                                                              upd-emp-v-k-set (set (keys (filter #(empty? (val %)) upd-kv-map)))
+                                                              upd-where-set (set (keys (kvm :whereClause)))]
+                                                          (if-not (and (empty? (set/difference upd-k-set col-set))
+                                                                       (= req-set (set/difference req-set upd-emp-v-k-set))
+                                                                       (empty? (set/difference upd-where-set col-set)))
                                                             (throw (RuntimeException. (str "Record (" kvm ") is not consistent with schema definition in the file (" schema-file-name ").")))))))
                                           update-stmts))]
             (doseq [kv (mapcat #(gen-addr-val-map-from-upd-stmt %1)
