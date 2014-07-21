@@ -301,12 +301,15 @@
                                               row-idx)))))]
           (let [valid-kvms (let [req-set (set (map keyword required))
                                  col-set (set (keys col-idx-map))]
-                             (filter (complement (fn [kvm]
-                                                   (let [upd-k-set (set (keys kvm))]
-                                                     ; Required attribute is missing or non-existent attribute is provided.
-                                                     (when-not (and (empty? (set/difference req-set upd-k-set))
-                                                                    (empty? (set/difference upd-k-set col-set)))
-                                                       (throw (RuntimeException. (str "Record (" kvm ") is not consistent with schema definition in the file (" schema-file-name ").")))))))
+                                  (filter (complement
+                                            (fn [kvm]
+                                              (let [upd-k-set (set (keys kvm))]
+                                                ; Required attribute is missing or non-existent attribute is provided.
+                                                (when-not (and (empty? (set/difference req-set upd-k-set))
+                                                               (empty? (set/difference upd-k-set col-set)))
+                                                  (throw
+                                                    (RuntimeException.
+                                                      (str "Record (" kvm ") is not consistent with schema definition in the file (" schema-file-name ").")))))))
                                      kvms))
                 avl-row-idxs (filter (complement (partial exist-required-value
                                                           schema-info
