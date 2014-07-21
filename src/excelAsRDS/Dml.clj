@@ -377,7 +377,9 @@
                                                           (if-not (and (empty? (set/difference upd-k-set col-set))
                                                                        (= req-set (set/difference req-set upd-emp-v-k-set))
                                                                        (empty? (set/difference upd-where-set col-set)))
-                                                            (throw (RuntimeException. (str "Record (" kvm ") is not consistent with schema definition in the file (" schema-file-name ").")))))))
+                                                            (throw
+                                                              (RuntimeException.
+                                                                (str "Record (" kvm ") is not consistent with schema definition in the file (" schema-file-name ").")))))))
                                           update-stmts))]
             (doseq [kv (mapcat #(gen-addr-val-map-from-upd-stmt %1)
                                valid-upd-stmts)]
