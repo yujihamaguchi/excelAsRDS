@@ -277,7 +277,7 @@
                    key-value-coll-json))
 
 (defn insertSS
-  "Insert data to excel spreadsheet."
+  "Insert tuple to excel record."
   [schema-file-name xls-file-name key-value-map-set-json]
   (let [schema-info (load-schema-info schema-file-name)
         { col-idx-map :columnIndex
