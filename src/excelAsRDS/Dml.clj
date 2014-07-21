@@ -334,7 +334,7 @@
             key-value-map-set-json))
 
 (defn updateSS
-  "Update data in excel spreadsheet."
+  "Update selected datas in Cells."
   [schema-file-name xls-file-name update-stmts-json]
   (let [schema-info (load-schema-info schema-file-name)
         { col-idx-map :columnIndex
