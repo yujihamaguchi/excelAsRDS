@@ -29,6 +29,24 @@
          insertSS
          updateSS)
 
+;; macros
+(defmacro if-lets [bindings true-expr false-expr]
+  (cond
+    ; pair bindings?
+    (not (zero? (rem (count bindings) 2)))
+    (throw (IllegalArgumentException. "if-lets requires 2 or multiple of 2 forms in binding vector in user:1"))
+    ; exist next binding?
+    (seq (drop 2 bindings))
+    `(if-let ~(vec (take 2 bindings))
+             (if-lets ~(vec (drop 2 bindings))
+                      ~true-expr
+                      ~false-expr)
+             ~false-expr)
+    :else
+    `(if-let ~(vec bindings)
+             ~true-expr
+             ~false-expr)))
+
 (defn get-cell-value
   "Return a cell value."
   ([sheet col-idx row-idx]
@@ -211,12 +229,12 @@
               (map #(apply hash-map
                            (mapcat (fn [attr]
                                      (let [col-idx ((schema-info :columnIndex) (keyword attr))]
-                                       (if (and (schema-info :excelFormula)
-                                                ((schema-info :excelFormula) (keyword attr)))
+                                       (if-lets [excelFormulas (schema-info :excelFormula)
+                                                 excelFormula (excelFormulas (keyword attr))]
                                            [attr (get-cell-value sheet
                                                                  col-idx
                                                                  %
-                                                                 ((schema-info :excelFormula) (keyword attr)))]
+                                                                 excelFormula)]
                                            [attr (get-cell-value sheet
                                                                  col-idx
                                                                  %)])))
