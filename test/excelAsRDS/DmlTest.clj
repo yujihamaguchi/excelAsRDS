@@ -1014,7 +1014,7 @@
               "./resources/test04.xls"
               "{ \"attributes\" : [\"not-exist-attr\", \"host\", \"id\", \"pwd\"] }")
             (catch RuntimeException e (.getMessage e)))
-          "Attributes (#{\"not-exist-attr\"}) not exist in select statement."
+          "Attribute (#{\"not-exist-attr\"}) is not defined."
         )
       )
     )
@@ -1049,7 +1049,7 @@
               "./resources/test04.xls"
               "{ \"attributes\" : [\"host\", \"id\", \"pwd\"], \"whereClause\" : {\"not-exist-attr\" : 1 }}")
             (catch RuntimeException e (.getMessage e)))
-          "Attributes (#{\"not-exist-attr\"}) not exist in where clause."
+          "Attribute (#{\"not-exist-attr\"}) is not defined."
         )
       )
     )
@@ -1154,7 +1154,7 @@
               "./resources/test04.xlsx"
               "{ \"attributes\" : [\"not-exist-attr\", \"host\", \"id\", \"pwd\"] }")
             (catch RuntimeException e (.getMessage e)))
-          "Attributes (#{\"not-exist-attr\"}) not exist in select statement."
+          "Attribute (#{\"not-exist-attr\"}) is not defined."
         )
       )
     )
@@ -1189,7 +1189,7 @@
               "./resources/test04.xlsx"
               "{ \"attributes\" : [\"host\", \"id\", \"pwd\"], \"whereClause\" : {\"not-exist-attr\" : 1 }}")
             (catch RuntimeException e (.getMessage e)))
-          "Attributes (#{\"not-exist-attr\"}) not exist in where clause."
+          "Attribute (#{\"not-exist-attr\"}) is not defined."
         )
       )
     )

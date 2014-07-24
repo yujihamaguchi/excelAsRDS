@@ -192,6 +192,12 @@
       (zero? (count (schema-info :columnIndex))) (throw (Exception. (str "Column index definition (key 'columnIndex') not exist in file (" schema-file-name ").")))
       :else schema-info)))
 
+(defn validate-attrs [attrs defined-attrs]
+  "Attributes should be defined."
+  (let [diff (set/difference (set attrs) (set defined-attrs))]
+    (when (seq diff)
+      (throw (RuntimeException. (str "Attribute (" diff ") is not defined."))))))
+
 (defn selectSS
   "Returns JSON string that map collection is selected from excel spreadsheet."
   [schema-file-name xls-file-name select-stmt-json]
@@ -202,31 +208,20 @@
           sheet-idx   :sheetIndex
           required    :required
           xls-frms    :excelFormula } schema-info
+        defined-attrs (map name (keys col-idx-map))
         select-stmt (json/read-json select-stmt-json)
-        where-clause (:whereClause select-stmt)
-        all-attrs (map name (keys col-idx-map))
-        attrs (let [{attrs :attributes} select-stmt]
+        select-attrs (let [{attrs :attributes} select-stmt]
                 (if-not (seq attrs)
-                  all-attrs
-                  attrs))]
-    ; Attribute in select clause does not exists.
-    (let [diff (set/difference (set attrs)
-                               (set all-attrs))]
-      (if (seq diff)
-        (throw (RuntimeException. (str "Attributes (" diff ") not exist in select statement.")))))
-    ; Attribute in where clause does not exists.
-    (let [diff (set/difference (->> where-clause
-                                    keys
-                                    (map name) 
-                                    set)
-                               (->> all-attrs
-                                    set))]
-      (if (seq diff)
-        (->> (str "Attributes (" diff ") not exist in where clause.")
-             RuntimeException.
-             throw)))
+                  defined-attrs
+                  attrs))
+        where-clause (:whereClause select-stmt)
+        where-attrs (->> where-clause
+                         keys
+                         (map name))]
+    (validate-attrs select-attrs defined-attrs)
+    (validate-attrs where-attrs defined-attrs)
     (json/write-str
-      (if-not (seq attrs)
+      (if-not (seq select-attrs)
         []
         (with-open [in (FileInputStream. xls-file-name)]
           (let [workbook (WorkbookFactory/create in)
@@ -243,7 +238,7 @@
                                                [attr (get-cell-value sheet
                                                                      col-idx
                                                                      %)])))
-                                   attrs))
+                                   select-attrs))
                    (filter #(and (exist-required-value schema-info
                                                        sheet
                                                        %)
@@ -254,10 +249,10 @@
                      (range stt-row-idx
                             (inc end-row-idx)))))))))))
 
-(defn -selectSS [schema-file-name xls-file-name attrs]
+(defn -selectSS [schema-file-name xls-file-name select-attrs]
   (selectSS schema-file-name
             xls-file-name
-            attrs))
+            select-attrs))
 
 (defn getSSCellValues
   "Return JSON string that value collection is got from excel spreadsheet."
