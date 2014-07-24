@@ -196,9 +196,15 @@
   "Returns JSON string that map collection is selected from excel spreadsheet."
   [schema-file-name xls-file-name select-stmt-json]
   (let [schema-info (load-schema-info schema-file-name)
+        { col-idx-map :columnIndex
+          stt-row-idx :startRowIndex
+          end-row-idx :endRowIndex
+          sheet-idx   :sheetIndex
+          required    :required
+          xls-frms    :excelFormula } schema-info
         select-stmt (json/read-json select-stmt-json)
         where-clause (:whereClause select-stmt)
-        all-attrs (map name (keys (schema-info :columnIndex)))
+        all-attrs (map name (keys col-idx-map))
         attrs (let [{attrs :attributes} select-stmt]
                 (if-not (seq attrs)
                   all-attrs
@@ -224,20 +230,19 @@
         []
         (with-open [in (FileInputStream. xls-file-name)]
           (let [workbook (WorkbookFactory/create in)
-                sheet (.getSheetAt workbook (schema-info :sheetIndex))]
+                sheet (.getSheetAt workbook sheet-idx)]
             (set
               (map #(apply hash-map
                            (mapcat (fn [attr]
-                                     (let [col-idx ((schema-info :columnIndex) (keyword attr))]
-                                       (if-lets [excelFormulas (schema-info :excelFormula)
-                                                 excelFormula (excelFormulas (keyword attr))]
-                                           [attr (get-cell-value sheet
-                                                                 col-idx
-                                                                 %
-                                                                 excelFormula)]
-                                           [attr (get-cell-value sheet
-                                                                 col-idx
-                                                                 %)])))
+                                     (let [col-idx (col-idx-map (keyword attr))]
+                                       (if-let [excelFormula ((keyword attr) xls-frms)]
+                                               [attr (get-cell-value sheet
+                                                                     col-idx
+                                                                     %
+                                                                     excelFormula)]
+                                               [attr (get-cell-value sheet
+                                                                     col-idx
+                                                                     %)])))
                                    attrs))
                    (filter #(and (exist-required-value schema-info
                                                        sheet
@@ -246,8 +251,8 @@
                                                          sheet
                                                          %
                                                          where-clause))
-                     (range (schema-info :startRowIndex)
-                            (inc (schema-info :endRowIndex))))))))))))
+                     (range stt-row-idx
+                            (inc end-row-idx)))))))))))
 
 (defn -selectSS [schema-file-name xls-file-name attrs]
   (selectSS schema-file-name
