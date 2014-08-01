@@ -8,6 +8,24 @@
     :methods [#^{:static true} [isEqualJSONStrAsSet [String String] Boolean]
               #^{:static true} [differenceJSONStrAsSet [String String] String]]))
 
+;;; macros
+(defmacro if-lets
+  ([bindings true-expr] `(if-lets ~bindings ~true-expr nil))
+  ([bindings true-expr false-expr]
+    (cond
+      (or (not (seq bindings)) (not (zero? (rem (count bindings) 2))))
+        `(throw (IllegalArgumentException. "if-lets requires 2 or multiple of 2 forms in binding vector in user:1"))
+      (seq (drop 2 bindings))
+        `(if-let ~(vec (take 2 bindings))
+                 (if-lets ~(vec (drop 2 bindings))
+                          ~true-expr
+                          ~false-expr)
+                 ~false-expr)
+      :else
+        `(if-let ~(vec bindings)
+                 ~true-expr
+                 ~false-expr))))
+
 (defn isEqualJSONStrAsSet
   "Returns true if arguments are equal to each other as set, false otherwise."
   [set1-json set2-json]

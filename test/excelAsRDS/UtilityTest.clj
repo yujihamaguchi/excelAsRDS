@@ -3,6 +3,40 @@
     [clojure.test :refer :all]
     [excelAsRDS.Utility :refer :all]))
 
+(deftest ut-if-lets
+  (testing "if-lets macro (normal cases)"
+    (is (= 0 (if-lets [x 0] x)))
+    (is (= 0 (if-lets [x 0] x 1)))
+    (is (= 1 (if-lets [x nil] x 1)))
+    (is (= 0 (if-lets [x 0 y x] y)))
+    (is (= 0 (if-lets [x 0 y x] y 1)))
+    (is (= 1 (if-lets [x nil y x] y 1)))
+    (is (= 0 (if-lets [x 0 y x z y] z)))
+    (is (= 0 (if-lets [x 0 y x z y] z 1)))
+    (is (= 1 (if-lets [x nil y x z y] y 1)))
+    (is (= true (if-lets [x true] true false)))
+    (is (= false (if-lets [x false] true false)))
+    (is (= true (if-lets [x true y true] true false)))
+    (is (= false (if-lets [x false y true] true false)))
+    (is (= false (if-lets [x true y false] true false)))
+    (is (= true (if-lets [x true y true z true] true false)))
+    (is (= false (if-lets [x false y true z true] true false)))
+    (is (= false (if-lets [x true y false z true] true false)))
+    (is (= false (if-lets [x true y true z false] true false)))
+  )
+)
+
+(deftest ut-if-lets-ab
+  (testing "if-lets macro (abnormal cases)"
+    (is (= (try (if-lets [] true false) (catch Exception e (.getMessage e)))
+        "if-lets requires 2 or multiple of 2 forms in binding vector in user:1"))
+    (is (= (try (if-lets [x] true false) (catch Exception e (.getMessage e)))
+        "if-lets requires 2 or multiple of 2 forms in binding vector in user:1"))
+    (is (= (try (if-lets [x true y] true false) (catch Exception e (.getMessage e)))
+        "if-lets requires 2 or multiple of 2 forms in binding vector in user:1"))
+  )
+)
+
 (deftest ut-isEqualJSONStrAsSet
   (testing "isEqualJSONStrAsSet(正常系)"
     (testing "0要素(オブジェクト)が等しい"
