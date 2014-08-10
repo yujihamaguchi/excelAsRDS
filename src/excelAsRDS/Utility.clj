@@ -10,6 +10,7 @@
 
 ;;; macros
 (defmacro if-lets
+  "If test is true, evaluates then with binding-form bound to the value of test, if not, yields else"
   ([bindings true-expr] `(if-lets ~bindings ~true-expr nil))
   ([bindings true-expr false-expr]
     (cond
