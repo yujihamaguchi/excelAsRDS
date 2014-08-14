@@ -3,7 +3,8 @@
   (:require [clojure.data.json :as json :only [read-str read-json write-str]]
             [clojure.set :as set :only [difference]]
             [clojure.java.io :as io :only [reader]]
-            [clojure.string :as str :only [replace]])
+            [clojure.string :as str :only [replace]]
+            [excelAsRDS.Utility :refer :all])
   (:import [org.apache.poi.ss.usermodel Row Cell DateUtil]
            [org.apache.poi.ss.usermodel Workbook WorkbookFactory Cell DataFormatter FormulaEvaluator]
            [java.io File FileInputStream FileOutputStream])
@@ -180,24 +181,22 @@
     (when (seq diff)
       (throw (RuntimeException. (str "Attribute (" diff ") is not defined."))))))
 
-(defn get-cell-values [schema-info sheet row-idx]
-  (let [{ attr->col-idx-map :columnIndex
-          ; stt-row-idx  :startRowIndex
-          ; end-row-idx  :endRowIndex
-          ; sheet-idx    :sheetIndex
-          ; required     :required
-          xls-formulas :excelFormula } schema-info
-          select-attrs (let [{attrs :attributes} select-stmt]
-                         (if-not (seq attrs)
-                           defined-attrs
-                           attrs))]
-  #(into {} (map (fn [select-attr]
-                   (let [select-attr-keyword (keyword select-attr)
-                         col-idx (select-attr-keyword attr->col-idx-map)]
-                     (if-let [xls-formula (select-attr-keyword xls-formulas)]
-                       [select-attr (get-cell-value sheet col-idx row-idx xls-formula)]
-                       [select-attr (get-cell-value sheet col-idx row-idx)])))
-                 select-attrs))))
+(defn select1 [schema-info sheet select-attrs row-idx]
+  (let [{ attr->col-idx :columnIndex
+          xls-formulas      :excelFormula } schema-info]
+    (->> select-attrs
+         (map (fn [attr]
+                ; (let [attr-key (keyword attr)
+                ;      col-idx (attr-key attr->col-idx)]
+                ;   (if-let [xls-formula (attr-key xls-formulas)]
+                ;     [attr (get-cell-value sheet col-idx row-idx xls-formula)]
+                ;     [attr (get-cell-value sheet col-idx row-idx)]))))
+                (if-lets [attr-key (keyword attr)
+                      col-idx (attr-key attr->col-idx)
+                  xls-formula (attr-key xls-formulas)]
+                    [attr (get-cell-value sheet col-idx row-idx xls-formula)]
+                    [attr (get-cell-value sheet col-idx row-idx)])))
+         (into {}))))
 
 (defn selectSS
   "Returns JSON string that map collection is selected from excel spreadsheet."
@@ -230,7 +229,7 @@
                 target-row-idxs (filter #(and (exist-required-value schema-info sheet %)
                                               (meet-where-clause-cond schema-info sheet % where-clause))
                                         (range stt-row-idx (inc end-row-idx)))]
-            (set (map (partial get-cell-values schema-info sheet) target-row-idxs))))))))
+            (set (map (partial select1 schema-info sheet select-attrs) target-row-idxs))))))))
 
 (defn -selectSS [schema-file-name xls-file-name select-attrs]
   (selectSS schema-file-name
